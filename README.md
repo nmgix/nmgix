@@ -1,1 +1,1 @@
-![](git.content/screen.svg)
+![](git.content/screen.jpg)
