@@ -92,7 +92,7 @@ async function drawCard(info: GithubReposResponseRepository, index: number) {
 
   //   дальше по этому репозиторию сделать запрос чтобы найти папку .git.content
   const requestLink = `${info.url}/contents/.git.content`;
-  const imageRequest = await fetch(`${requestLink}/image.png`);
+  const imageRequest = await fetch(`${requestLink}/image.png`, fetchParams);
   const descriptionRequest = await fetch(`${requestLink}/description.md`, fetchParams);
 
   if (imageRequest.status === 404 && descriptionRequest.status === 404) {
@@ -100,10 +100,11 @@ async function drawCard(info: GithubReposResponseRepository, index: number) {
     // тут имя репы и ниже коммиты
   } else {
     if (imageRequest.status === 200) {
-      const imageBuffer = Buffer.from(await imageRequest.arrayBuffer());
-      //   await loadImage(imageBuffer).then(image => {
-      //     ctx.drawImage(image, 0, 0);
-      //   });
+      const imageBuffer = Buffer.from((await imageRequest.json()).content, "base64");
+      await loadImage(imageBuffer).then(image => {
+        console.log(image);
+        ctx.drawImage(image, 4, 4);
+      });
     }
     if (descriptionRequest.status === 200) {
       let description: Description = await descriptionRequest.json();
