@@ -23,4 +23,4 @@ export type GithubReposResponseRepository = {
 // export type RepositoryInfo = { commits: number; tranlationName: string };
 
 export type CanvasSize = { width: number; height: number };
-export type Description = { translatedName: string };
+export type Description = { engName: string; ruName: string };

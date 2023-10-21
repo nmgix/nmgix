@@ -1,6 +1,8 @@
 import { Description, GithubReposResponse, GithubReposResponseRepository, ProgramParams } from "./types";
-import { createCanvas, loadImage } from "canvas";
+import { createCanvas, loadImage, registerFont } from "canvas";
 import fs from "fs";
+registerFont("fonts/Gilroy-Heavy.ttf", { family: "Gilroy Heavy" });
+registerFont("fonts/Gilroy-Regular.ttf", { family: "Gilroy Regular" });
 
 let fetchParams = {
   method: "GET",
@@ -15,6 +17,8 @@ let params: ProgramParams = {
   screenSize: { width: 900, height: 991 }
 };
 
+// let verticalShift = 0;
+
 async function main(): Promise<void> {
   let repos: GithubReposResponse = await fetch(
     `https://api.github.com/search/repositories?q=user:${params.user}&sort=updated&order=desc&per_page=4`,
@@ -22,7 +26,7 @@ async function main(): Promise<void> {
   ).then(res => res.json());
   //   console.log(repos.items.map(i => i.url));
 
-  // перед удалением старые файлы удалются (т.е. screen.png, card1.png, card2.png, card3.png, card4.png)
+  //  // // перед удалением старые файлы удалются (т.е. screen.png, card1.png, card2.png, card3.png, card4.png)
 
   // юзание темплейта для создания фото (пока что канвас пока прорисходит сборка фотки)
   // очередь обязательно, это ж канвас
@@ -103,7 +107,7 @@ async function drawCard(info: GithubReposResponseRepository, index: number) {
       const imageBuffer = Buffer.from((await imageRequest.json()).content, "base64");
       await loadImage(imageBuffer).then(image => {
         console.log(image);
-        ctx.drawImage(image, 4, 4);
+        ctx.drawImage(image, 3, 3);
       });
     }
     if (descriptionRequest.status === 200) {
@@ -113,6 +117,8 @@ async function drawCard(info: GithubReposResponseRepository, index: number) {
       // так же нужно следить чтобы не дошло за нижний или правый край
     } else {
       // тут писать просто название репы, ибо перевода нет
+      ctx.font = '24px "Gilroy Heavy"';
+      ctx.fillText(info.name, 16, 33, params.cardSize.width - 16);
     }
   }
   const buffer = canvas.toBuffer("image/png");
