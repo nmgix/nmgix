@@ -96,13 +96,16 @@ async function drawCard(info: GithubReposResponseRepository, index: number) {
 
   //   дальше по этому репозиторию сделать запрос чтобы найти папку .git.content
   const requestLink = `${info.url}/contents/.git.content`;
-  const imageRequest = await fetch(`${requestLink}/image.png`, fetchParams);
-  const descriptionRequest = await fetch(`${requestLink}/description.md`, fetchParams);
+  const imageRequest = await fetch(`${requestLink}/profile_card.png`, fetchParams);
+  const descriptionRequest = await fetch(`${requestLink}/profile_description.json`, fetchParams);
 
+  //  если инфы совсем нет по репозиторию, нет папки .git.content или нет нужных файлов
   if (imageRequest.status === 404 && descriptionRequest.status === 404) {
-    console.log("no side data!");
-    // тут имя репы и ниже коммиты
+    ctx.font = '24px "Gilroy Heavy"';
+    ctx.fillText(info.name, 16, 33, params.cardSize.width - 16);
+    writeCommits();
   } else {
+    // если есть фоновое изображение
     if (imageRequest.status === 200) {
       const imageBuffer = Buffer.from((await imageRequest.json()).content, "base64");
       await loadImage(imageBuffer).then(image => {
@@ -110,8 +113,11 @@ async function drawCard(info: GithubReposResponseRepository, index: number) {
         ctx.drawImage(image, 3, 3);
       });
     }
+    // если есть переводы на русск/англ
     if (descriptionRequest.status === 200) {
       let description: Description = await descriptionRequest.json();
+      ctx.font = '24px "Gilroy Heavy"';
+      ctx.fillText(description.ruName, 16, 33, params.cardSize.width - 16);
       //   нужна функция чтобы устанавливать текст и глобальная переменная которая будет следить за свободным местом для текста
       // при любом сбросе на строчку ниже, при любом новом тексте, она должна инкрементироваться
       // так же нужно следить чтобы не дошло за нижний или правый край
@@ -120,8 +126,17 @@ async function drawCard(info: GithubReposResponseRepository, index: number) {
       ctx.font = '24px "Gilroy Heavy"';
       ctx.fillText(info.name, 16, 33, params.cardSize.width - 16);
     }
+
+    writeCommits();
   }
   const buffer = canvas.toBuffer("image/png");
   // этот буфер нужно будет возращать
   fs.writeFileSync("./generated_images/card1.png", buffer);
+
+  async function writeCommits() {
+    let commits = await getCommitsNumber(info.commits_url);
+
+    ctx.font = '16px "Gilroy Regular"';
+    ctx.fillText(`${commits} commit${commits > 1 ? "s" : ""}`, 16, 180, params.cardSize.width - 16);
+  }
 }
