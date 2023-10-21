@@ -1,0 +1,12 @@
+{
+  "name": "imageupdater",
+  "version": "1.0.0",
+  "scripts": {
+    "start": "ts-node runner.ts"
+  },
+  "author": "nmgix",
+  "license": "ISC",
+  "dependencies": {
+    "ts-node": "^10.9.1"
+  }
+}
