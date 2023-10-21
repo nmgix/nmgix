@@ -1,5 +1,6 @@
-import { GithubReposResponse, GithubReposResponseRepository, ProgramParams, RepositoryInfo } from "./types";
+import { Description, GithubReposResponse, GithubReposResponseRepository, ProgramParams } from "./types";
 import { createCanvas, loadImage } from "canvas";
+import fs from "fs";
 
 let fetchParams = {
   method: "GET",
@@ -34,7 +35,7 @@ async function main(): Promise<void> {
   // закончить функцию, дальше ci/cd сам обновит картинку
 
   // настроить крон для ci/cd
-  console.log(repos.items[0].name);
+  await drawCard(repos.items[0], 0);
 }
 
 main();
@@ -47,48 +48,73 @@ async function getCommitsNumber(url: string): Promise<number> {
   return Number(linkHeader.replace(/\D/g, ""));
 }
 
-function drawScreen() {}
-
-async function drawCard(info: GithubReposResponseRepository & RepositoryInfo, index: number) {
+function drawScreen() {
   const canvas = createCanvas(params.cardSize.width, params.cardSize.height);
   const ctx = canvas.getContext("2d");
 
-  let dx: number;
-  //   мне лень считать, да и так проще понять расстановку
-  switch (index) {
-    case 0:
-      dx = 30;
-      break;
-    case 1:
-      dx = 240;
-      break;
-    case 2:
-      dx = 450;
-      break;
-    case 3:
-      dx = 660;
-      break;
-  }
+  // тут загрузить все фотки, края и прочее
+
+  // {
+  //     // index берется из цикла (4 карточки расставить)
+
+  //     let dx: number;
+  // //   мне лень считать, да и так проще понять расстановку
+  // switch (index) {
+  //   case 0:
+  //     dx = 30;
+  //     break;
+  //   case 1:
+  //     dx = 240;
+  //     break;
+  //   case 2:
+  //     dx = 450;
+  //     break;
+  //   case 3:
+  //     dx = 660;
+  //     break;
+  // }
+
+  // //   первый этап, загружаем дефолтное изображения фона
+  // await loadImage("default_images/emptyframe.png").then(image => {
+  //   ctx.drawImage(image, dx, 729);
+  // });
+  // }
+}
+
+async function drawCard(info: GithubReposResponseRepository, index: number) {
+  const canvas = createCanvas(params.cardSize.width, params.cardSize.height);
+  const ctx = canvas.getContext("2d");
 
   //   первый этап, загружаем дефолтное изображения фона
-  loadImage("default_images/emptyframe.png").then(image => {
-    ctx.drawImage(image, dx, 729);
+  await loadImage("default_images/emptyframe.png").then(image => {
+    ctx.drawImage(image, 0, 0);
   });
 
   //   дальше по этому репозиторию сделать запрос чтобы найти папку .git.content
   const requestLink = `${info.url}/contents/.git.content`;
-  const image = await fetch(`${requestLink}/image.png`);
-  const imageBuffer = Buffer.from(await image.arrayBuffer());
-  const description = await fetch(`${requestLink}/description.md`, fetchParams).then(res => res.json());
+  const imageRequest = await fetch(`${requestLink}/image.png`);
+  const descriptionRequest = await fetch(`${requestLink}/description.md`, fetchParams);
 
-  if (imageBuffer.length === 0 || !description) {
+  if (imageRequest.status === 404 && descriptionRequest.status === 404) {
     console.log("no side data!");
     // тут имя репы и ниже коммиты
+  } else {
+    if (imageRequest.status === 200) {
+      const imageBuffer = Buffer.from(await imageRequest.arrayBuffer());
+      //   await loadImage(imageBuffer).then(image => {
+      //     ctx.drawImage(image, 0, 0);
+      //   });
+    }
+    if (descriptionRequest.status === 200) {
+      let description: Description = await descriptionRequest.json();
+      //   нужна функция чтобы устанавливать текст и глобальная переменная которая будет следить за свободным местом для текста
+      // при любом сбросе на строчку ниже, при любом новом тексте, она должна инкрементироваться
+      // так же нужно следить чтобы не дошло за нижний или правый край
+    } else {
+      // тут писать просто название репы, ибо перевода нет
+    }
   }
-  // тут изображение и потом имена
-  //   тут из description.md имя русск и ниже англ
-
-  loadImage("default_images/emptyframe.png").then(image => {
-    ctx.drawImage(image, dx, 729);
-  });
+  const buffer = canvas.toBuffer("image/png");
+  // этот буфер нужно будет возращать
+  fs.writeFileSync("./generated_images/card1.png", buffer);
 }

@@ -20,6 +20,7 @@ export type GithubReposResponseRepository = {
   commits_url: string;
 };
 
-export type RepositoryInfo = { commits: number; tranlationName: string };
+// export type RepositoryInfo = { commits: number; tranlationName: string };
 
 export type CanvasSize = { width: number; height: number };
+export type Description = { translatedName: string };
