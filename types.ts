@@ -1,3 +1,9 @@
+export type ProgramParams = {
+  user: string;
+  cardSize: CanvasSize;
+  screenSize: CanvasSize;
+};
+
 export type GithubReposResponse = {
   total_count: number;
   items: GithubReposResponseRepository[];
@@ -13,3 +19,7 @@ export type GithubReposResponseRepository = {
   size: string;
   commits_url: string;
 };
+
+export type RepositoryInfo = { commits: number; tranlationName: string };
+
+export type CanvasSize = { width: number; height: number };
