@@ -21,7 +21,7 @@ jobs:
           node-version: "14"
 
       - name: Установка пакетов
-        run: npm ci
+        run: npm i
 
       - name: Создание изображения
         run: ts-node runner.ts
