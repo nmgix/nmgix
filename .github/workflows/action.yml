@@ -24,7 +24,7 @@ jobs:
         run: npm i
 
       - name: Создание изображения
-        run: ts-node runner.ts
+        run: npx ts-node runner.ts
         env:
           PUBLIC_ACCESS_TOKEN: ${{ secrets.PUBLIC_ACCESS_TOKEN }}
 
