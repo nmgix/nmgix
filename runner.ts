@@ -166,14 +166,12 @@ async function drawCard(info: GithubReposResponseRepository) {
     ctx.font = '18px "Gilroy Regular"';
     const secondTitle = formatTitle(description.engName);
     ctx.fillText(secondTitle[0], 16, 33 * verticalShift + 2 * verticalShift + params.card.text.subtitleModifier, params.card.cardSize.width - 16);
-    verticalShift++;
     if (secondTitle[0] !== secondTitle[1] && secondTitle[1]) {
       ctx.fillText(
         secondTitle[1],
         16,
-        33 * verticalShift + 2 * verticalShift + params.card.text.largeTextLineHeight + params.card.text.subtitleModifier
+        33 * verticalShift + 3 * verticalShift + params.card.text.smallTextLineHeight + params.card.text.subtitleModifier
       );
-      verticalShift++;
     }
   }
 
