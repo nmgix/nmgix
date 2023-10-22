@@ -36,11 +36,11 @@ async function main(): Promise<void> {
   console.time("Screen generating took");
 
   let repos: GithubReposResponse = (await fetch(
-    `https://api.github.com/search/repositories?q=user:${params.user}&sort=updated&order=desc&per_page=4`,
+    `https://api.github.com/search/repositories?q=user:${params.user}&sort=updated&order=desc&per_page=5`,
     fetchParams
   ).then(async res => await res.json())) as GithubReposResponse;
 
-  let reposImages = await Promise.all(repos.items.map(async r => await drawCard(r)));
+  let reposImages = await Promise.all(repos.items.filter(r => r.name !== "nmgix").map(async r => await drawCard(r)));
   await drawScreen(reposImages);
 
   console.timeEnd("Screen generating took");
