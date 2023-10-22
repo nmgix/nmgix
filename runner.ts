@@ -1,10 +1,12 @@
-import { Description, GithubReposResponse, GithubReposResponseRepository, ProgramParams } from "./types";
-import { createCanvas, loadImage, registerFont } from "canvas";
-import { formatTitle } from "./title";
-import "dotenv/config";
+import fetch from "node-fetch";
 import fs from "fs";
+import "dotenv/config";
+import { createCanvas, loadImage, registerFont } from "canvas";
 registerFont("fonts/Gilroy-Heavy.ttf", { family: "Gilroy Heavy" });
 registerFont("fonts/Gilroy-Regular.ttf", { family: "Gilroy Regular" });
+
+import { Description, GithubReposResponse, GithubReposResponseRepository, ProgramParams } from "./types";
+import { formatTitle } from "./title";
 
 let fetchParams = {
   method: "GET",
@@ -33,10 +35,10 @@ let params: ProgramParams = {
 async function main(): Promise<void> {
   console.time("Screen generating took");
 
-  let repos: GithubReposResponse = await fetch(
+  let repos: GithubReposResponse = (await fetch(
     `https://api.github.com/search/repositories?q=user:${params.user}&sort=updated&order=desc&per_page=4`,
     fetchParams
-  ).then(res => res.json());
+  ).then(async res => await res.json())) as GithubReposResponse;
 
   let reposImages = await Promise.all(repos.items.map(async r => await drawCard(r)));
   await drawScreen(reposImages);
@@ -110,7 +112,7 @@ async function drawCard(info: GithubReposResponseRepository) {
   const descriptionRequest = await fetch(`${requestLink}/profile_description.json`, fetchParams);
   // если есть фоновое изображение
   if (imageRequest.status === 200) {
-    const imageBuffer = Buffer.from((await imageRequest.json()).content, "base64");
+    const imageBuffer = Buffer.from(((await imageRequest.json()) as { content: string }).content, "base64");
     await loadImage(imageBuffer).then(image => {
       ctx.drawImage(image, 3, 3);
     });
@@ -129,7 +131,9 @@ async function drawCard(info: GithubReposResponseRepository) {
     }
   }
   if (descriptionRequest.status === 200) {
-    let description: Description = JSON.parse(Buffer.from(await descriptionRequest.json().then(res => res.content), "base64").toString("utf8"));
+    let description: Description = JSON.parse(
+      Buffer.from(((await descriptionRequest.json()) as { content: string }).content, "base64").toString("utf8")
+    );
     // главный заголовок
     ctx.font = '24px "Gilroy Heavy"';
     const firstTitle = formatTitle(description.ruName);
