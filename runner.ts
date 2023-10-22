@@ -114,7 +114,6 @@ async function drawScreen(reposImages: Buffer[]) {
 }
 
 async function drawCard(info: GithubReposResponseRepository) {
-  let verticalShift = 1;
   const canvas = createCanvas(params.card.cardSize.width, params.card.cardSize.height);
   const ctx = canvas.getContext("2d");
 
@@ -127,6 +126,8 @@ async function drawCard(info: GithubReposResponseRepository) {
   const requestLink = `${info.url}/contents/.git.content`;
   const imageRequest = await fetch(`${requestLink}/profile_card.png`, fetchParams);
   const descriptionRequest = await fetch(`${requestLink}/profile_description.json`, fetchParams);
+  const languages: { [x: string]: number } = await fetch(`${info.url}/languages`).then(res => res.json());
+
   // если есть фоновое изображение
   if (imageRequest.status === 200) {
     const imageBuffer = Buffer.from(((await imageRequest.json()) as { content: string }).content, "base64");
@@ -134,7 +135,7 @@ async function drawCard(info: GithubReposResponseRepository) {
       ctx.drawImage(image, 3, 3);
     });
   }
-
+  let verticalShift = 1;
   if (descriptionRequest.status === 404) {
     // если нет .git.content, то просто имя репозитория
     ctx.font = '24px "Gilroy Heavy"';
@@ -175,6 +176,38 @@ async function drawCard(info: GithubReposResponseRepository) {
       verticalShift++;
     }
   }
+
+  let invertedVerticalShift = 0;
+  await Object.keys(languages)
+    .slice(0, 4)
+    .forEach(async lang => {
+      let iconFolder = "icons";
+      let icon = undefined;
+      switch (lang.toLowerCase()) {
+        case "typescript":
+          icon = `${iconFolder}/ts.png`;
+          break;
+        case "javascript":
+          icon = `${iconFolder}/js.png`;
+          break;
+        case "scss":
+        case "sass":
+          icon = `${iconFolder}/sass.png`;
+          break;
+        case "docker":
+        case "dockerfile":
+          icon = `${iconFolder}/docker.png`;
+          break;
+        case "html":
+          icon = `${iconFolder}/html.png`;
+          break;
+      }
+      if (!icon) return;
+      await loadImage(icon).then(image => {
+        ctx.drawImage(image, 170, 170 - 25 * invertedVerticalShift);
+        invertedVerticalShift++;
+      });
+    });
 
   await writeCommits();
 

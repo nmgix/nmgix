@@ -24,7 +24,6 @@ export type GithubReposResponseRepository = {
   html_url: string; // usual url
   description: string;
   url: string; //api url
-  language: string | string[];
   topics: string[];
   size: string;
   commits_url: string;
