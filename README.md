@@ -1,1 +1,1 @@
-![](generated_images/screen.png)
+![](generated_images/screen.png?)
