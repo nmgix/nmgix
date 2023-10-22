@@ -15,7 +15,7 @@ jobs:
       - name: Получение репозитория
         uses: actions/checkout@v4
 
-      - name: настройка ноды
+      - name: Настройка ноды
         uses: actions/setup-node@v3
         with:
           node-version: "14"

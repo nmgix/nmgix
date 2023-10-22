@@ -107,7 +107,7 @@ async function drawScreen(reposImages: Buffer[]) {
 
   ctx.font = '14px "Gilroy Regular"';
   ctx.fillStyle = "#FFFFFF";
-  ctx.fillText(`Обновлено: ${formattedDateTime} (UTC +3)`, 33, 942);
+  ctx.fillText(`Обновлено: ${formattedDateTime} (UTC +3)`, 33, 938);
 
   const buffer = canvas.toBuffer("image/png");
   fs.writeFileSync("./generated_images/screen.png", buffer);
