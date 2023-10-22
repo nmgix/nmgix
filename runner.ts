@@ -44,10 +44,10 @@ async function main(): Promise<void> {
   await drawScreen(reposImages);
 
   console.timeEnd("Screen generating took");
-  //   добавить public access token в secrets в гит репозитории
   return process.exit(0);
 }
 
+// вызов главной функции
 main();
 
 async function getCommitsNumber(url: string) {
@@ -88,9 +88,24 @@ async function drawScreen(reposImages: Buffer[]) {
           break;
       }
 
-      ctx.drawImage(image, dx, 728);
+      ctx.drawImage(image, dx, 722);
     });
   });
+
+  //   утсановка текущей даты обновления изображения
+  const currentDate = new Date();
+  const formattedDateTime = new Intl.DateTimeFormat("ru-RU", {
+    year: "2-digit",
+    month: "2-digit",
+    day: "2-digit",
+    hour: "2-digit",
+    minute: "2-digit",
+    second: "2-digit"
+  }).format(currentDate);
+
+  ctx.font = '14px "Gilroy Regular"';
+  ctx.fillStyle = "#FFFFFF";
+  ctx.fillText(`Обновлено: ${formattedDateTime}`, 33, 942);
 
   const buffer = canvas.toBuffer("image/png");
   fs.writeFileSync("./generated_images/screen.png", buffer);
