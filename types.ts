@@ -1,7 +1,17 @@
 export type ProgramParams = {
   user: string;
-  cardSize: CanvasSize;
-  screenSize: CanvasSize;
+  card: {
+    cardSize: CanvasSize;
+    text: {
+      subtitleModifier: number;
+      largeTextLineHeight: number;
+      smallTextLineHeight: number;
+    };
+  };
+  screen: {
+    screenSize: CanvasSize;
+  };
+  testMode: boolean;
 };
 
 export type GithubReposResponse = {
