@@ -92,20 +92,22 @@ async function drawScreen(reposImages: Buffer[]) {
     });
   });
 
-  //   утсановка текущей даты обновления изображения
+  //   установка текущей даты обновления изображения
   const currentDate = new Date();
+  const timeZone = "Europe/Moscow";
   const formattedDateTime = new Intl.DateTimeFormat("ru-RU", {
     year: "2-digit",
     month: "2-digit",
     day: "2-digit",
     hour: "2-digit",
     minute: "2-digit",
-    second: "2-digit"
+    second: "2-digit",
+    timeZone
   }).format(currentDate);
 
   ctx.font = '14px "Gilroy Regular"';
   ctx.fillStyle = "#FFFFFF";
-  ctx.fillText(`Обновлено: ${formattedDateTime}`, 33, 942);
+  ctx.fillText(`Обновлено: ${formattedDateTime} (UTC +3)`, 33, 942);
 
   const buffer = canvas.toBuffer("image/png");
   fs.writeFileSync("./generated_images/screen.png", buffer);
