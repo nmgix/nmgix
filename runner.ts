@@ -3,23 +3,14 @@ import fs from "fs";
 import path from "path";
 import "dotenv/config";
 
-import { createCanvas, loadImage, registerFont } from "canvas";
+import { registerFont } from "canvas";
 registerFont("fonts/Gilroy-Heavy.ttf", { family: "Gilroy Heavy" });
 registerFont("fonts/Gilroy-Regular.ttf", { family: "Gilroy Regular" });
 
-import {
-  Description,
-  fetchParams,
-  GithubReposResponse,
-  GithubReposResponseRepository,
-  ImagesVars,
-  imageType,
-  paths,
-  ProgramParams
-} from "./utils/types";
-import { formatTitle } from "./utils/title";
+import { fetchParams, GithubReposResponse, paths, ProgramParams } from "./utils/types";
 import { drawCard, drawScreen } from "./utils/draw";
 
+// .env → PUBLIC_ACCESS_TOKEN=ghp_************************************
 let params: ProgramParams = {
   user: "nmgix",
   card: {
