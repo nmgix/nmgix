@@ -1,3 +1,4 @@
+import fetch from "node-fetch";
 import { fetchParams } from "./types";
 
 export async function getCommitsNumber(url: string) {

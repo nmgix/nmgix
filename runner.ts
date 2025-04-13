@@ -27,19 +27,24 @@ let params: ProgramParams = {
 };
 
 (async function main(): Promise<void> {
-  console.time("Screen generating took");
+  try {
+    console.time("Screen generating took");
 
-  let repos: GithubReposResponse = (await fetch(
-    `https://api.github.com/search/repositories?q=user:${params.user}&sort=updated&order=desc&per_page=5`,
-    fetchParams
-  ).then(async res => await res.json())) as GithubReposResponse;
+    let repos: GithubReposResponse = (await fetch(
+      `https://api.github.com/search/repositories?q=user:${params.user}&sort=updated&order=desc&per_page=5`,
+      fetchParams
+    ).then(async res => await res.json())) as GithubReposResponse;
 
-  let reposImages = await Promise.all(repos.items.filter(repo => repo.name !== params.user).map(async repo => await drawCard(repo, params)));
-  const resultBuffer = await drawScreen(reposImages, params).then(buffer => {
-    console.timeEnd("Screen generating took");
-    return buffer;
-  });
+    let reposImages = await Promise.all(repos.items.filter(repo => repo.name !== params.user).map(async repo => await drawCard(repo, params)));
+    const resultBuffer = await drawScreen(reposImages, params).then(buffer => {
+      console.timeEnd("Screen generating took");
+      return buffer;
+    });
 
-  fs.writeFileSync(path.join(__dirname, ...paths.screenStore), resultBuffer);
-  return process.exit(0);
+    fs.writeFileSync(path.join(__dirname, ...paths.screenStore), resultBuffer);
+    return process.exit(0);
+  } catch (error) {
+    console.log("ошибка билда uwu: " + error);
+    return process.exit(1);
+  }
 })();

@@ -1,3 +1,4 @@
+import fetch from "node-fetch";
 import { createCanvas, loadImage } from "canvas";
 import { Description, fetchParams, GithubReposResponseRepository, ImagesVars, imageType, paths, ProgramParams } from "./types";
 import path from "path";
