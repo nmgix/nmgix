@@ -4,7 +4,7 @@ import { Description, fetchParams, GithubReposResponseRepository, ImagesVars, im
 import path from "path";
 import { formatTitle } from "./title";
 import { getCommitsNumber } from "./git";
-import { getTextBlocks, getYearsData, trimToFit } from "./parser";
+import { getEventWordForm, getTextBlocks, getYearsData, trimToFit } from "./parser";
 
 import { JSDOM } from "jsdom";
 import fs from "fs";
@@ -113,11 +113,8 @@ export async function drawScreen(reposImages: Buffer[], params: ProgramParams) {
         ctx.font = '10px "Gilroy Regular"';
         ctx.fillStyle = "#676767";
         const eventsLeft = yearEventsLength - limitedYearEventsLength;
-        ctx.fillText(
-          `+${String(eventsLeft)} ${eventsLeft % 10 === 1 && eventsLeft !== 11 ? "событие" : "событий"} `,
-          startPos.x + 70,
-          startPos.y + offset - 5
-        );
+
+        ctx.fillText(`+${String(eventsLeft)} ${getEventWordForm(eventsLeft)} `, startPos.x + 70, startPos.y + offset - 5);
       }
     });
   } catch (error) {
