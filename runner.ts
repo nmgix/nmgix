@@ -6,9 +6,10 @@ import "dotenv/config";
 import { registerFont } from "canvas";
 registerFont("fonts/Gilroy-Heavy.ttf", { family: "Gilroy Heavy" });
 registerFont("fonts/Gilroy-Regular.ttf", { family: "Gilroy Regular" });
+registerFont("fonts/Gilroy-Bold.ttf", { family: "Gilroy Bold" });
 
 import { fetchParams, GithubReposResponse, paths, ProgramParams } from "./utils/types";
-import { drawCard, drawScreen } from "./utils/draw";
+import { drawBox, drawCard, drawScreen } from "./utils/draw";
 
 // .env → PUBLIC_ACCESS_TOKEN=ghp_************************************
 let params: ProgramParams = {
@@ -35,6 +36,8 @@ let params: ProgramParams = {
       fetchParams
     ).then(async res => await res.json())) as GithubReposResponse;
 
+    if (!repos || !repos?.items || !Array.isArray(repos.items) || repos.items.length == 0) throw new Error("Нет репозиториев");
+
     let reposImages = await Promise.all(repos.items.filter(repo => repo.name !== params.user).map(async repo => await drawCard(repo, params)));
     const resultBuffer = await drawScreen(reposImages, params).then(buffer => {
       console.timeEnd("Screen generating took");
@@ -44,6 +47,7 @@ let params: ProgramParams = {
     fs.writeFileSync(path.join(__dirname, ...paths.screenStore), resultBuffer);
     return process.exit(0);
   } catch (error) {
+    // console.log(error);
     console.log("ошибка билда uwu: " + error);
     return process.exit(1);
   }

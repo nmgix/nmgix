@@ -26,7 +26,7 @@ const getMaxNextLine = (input: string, maxChars = maxCharacters) => {
 };
 
 export const formatTitle = (title: string) => {
-  let output = [];
+  let output: string[] = [];
   if (title.length >= maxCharacters * 2) {
     const firstLine = getMaxNextLine(title);
     const secondLine = getMaxNextLine(firstLine.remainingChars);

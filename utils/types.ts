@@ -14,7 +14,8 @@ export const paths = {
 
   screenStore: ["generated_images", "screen.png"],
 
-  iconFolder: ["icons"]
+  iconFolder: ["icons"],
+  textData: ["data.md"]
 };
 
 export const imageType = "image/png";

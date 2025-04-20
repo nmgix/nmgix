@@ -5,6 +5,11 @@ import path from "path";
 import { formatTitle } from "./title";
 import { getCommitsNumber } from "./git";
 
+import { JSDOM } from "jsdom";
+import fs from "fs";
+
+import drawMultiLine from "canvas-multiline-text";
+
 export async function drawScreen(reposImages: Buffer[], params: ProgramParams) {
   const canvas = createCanvas(params.screen.screenSize.width, params.screen.screenSize.height);
   const ctx = canvas.getContext("2d");
@@ -42,6 +47,74 @@ export async function drawScreen(reposImages: Buffer[], params: ProgramParams) {
   ctx.font = '14px "Gilroy Regular"';
   ctx.fillStyle = "#FFFFFF";
   ctx.fillText(`Обновлено: ${formattedDateTime} (UTC +3)`, 33, 938);
+
+  // рендер бокового белого окна
+  const {
+    window: { document }
+  } = new JSDOM("<html><body></body></html>");
+  await loadImage(await drawBox(document, { width: 210, height: 500 })).then(image => ctx.drawImage(image, 650, 140));
+
+  // получение и рендер информации из data.md
+  try {
+    const text = fs.readFileSync(path.join(process.cwd(), ...paths.textData), { encoding: "utf8" });
+    if (!text || text.length == 0) throw new Error("didn't find data.md to parse info from");
+    const textBlocks = getTextBlocks(text);
+    if (textBlocks.length === 0) throw new Error("no text blocks found");
+    const yearBlocks = getYearsData(textBlocks[0]);
+    if (Object.keys(yearBlocks).length == 0) throw new Error("no year blocks found");
+
+    const startPos = { x: 667, y: 173 };
+    let verticalOffset = 0;
+    const offsets: number[] = [];
+    const eventsLength: number[] = [];
+    Object.entries(yearBlocks)
+      .slice(0, 5)
+      .map(async ([year, events]) => {
+        eventsLength.push(events.length);
+        events = events.reverse().slice(0, 3);
+        offsets.push(verticalOffset);
+        events.forEach(event => {
+          ctx.font = '20px "Gilroy Bold"';
+          ctx.fillStyle = "#000000";
+          ctx.fillText(year, startPos.x, startPos.y + verticalOffset);
+
+          // ctx.font = '12px "Gilroy Regular"';
+
+          ctx.fillStyle = "#000000";
+          drawMultiLine(ctx as unknown as CanvasRenderingContext2D, event, {
+            font: "Gilroy Regular",
+            lineHeight: 0.91,
+            maxFontSize: 12,
+            minFontSize: 10,
+            rect: { width: 133, height: 29, x: startPos.x + 57, y: startPos.y + verticalOffset - 19 }
+          });
+          // ctx.fillText(event, startPos.x + 57, startPos.y + verticalOffset - 3);
+
+          verticalOffset += 30;
+        });
+        // здесь svg с fade эффектом
+
+        verticalOffset += 5;
+      });
+    const gradientBoxInstanceBuffer = await loadImage(await drawGradientDownBox(document, { width: 180, height: 80 }));
+    offsets.forEach((offset, idx) => {
+      ctx.drawImage(gradientBoxInstanceBuffer, startPos.x, startPos.y + offset - 19);
+
+      const yearEventsLength = eventsLength[idx];
+      if (yearEventsLength > 3) {
+        ctx.font = '10px "Gilroy Regular"';
+        ctx.fillStyle = "#676767";
+        const eventsLeft = yearEventsLength - 3;
+        ctx.fillText(
+          `+${String(eventsLeft)} ${eventsLeft % 10 === 1 && eventsLeft !== 11 ? "событие" : "событий"} `,
+          startPos.x + 70,
+          startPos.y + offset - 5
+        );
+      }
+    });
+  } catch (error) {
+    console.log(error);
+  }
 
   return canvas.toBuffer(imageType);
 }
@@ -123,4 +196,63 @@ export async function drawCard(info: GithubReposResponseRepository, params: Prog
   })();
 
   return canvas.toBuffer(imageType);
+}
+
+// import { Rsvg } from "librsvg";
+import d3 from "d3";
+import { Resvg } from "@resvg/resvg-js";
+import { getTextBlocks, getYearsData } from "./parser";
+// import fs from "fs";
+
+export async function drawBox(document: Document, size: { width: number; height: number }) {
+  // const boxTop = new Rsvg(path.join(process.cwd(), ...paths.formsFolder))
+
+  const svg = d3
+    .select(document)
+    .select("body")
+    .append("svg")
+    .attr("width", size.width)
+    .attr("xmlns", "http://www.w3.org/2000/svg")
+    .attr("height", size.height);
+  svg.append("rect").attr("id", "history").attr("width", size.width).attr("height", size.height).style("fill", "white").attr("rx", 10);
+  const svgresult = d3.select(document).select("body").html();
+  d3.select(document).select("body").html("");
+  return new Resvg(svgresult).render().asPng();
+}
+
+async function drawGradientDownBox(document: Document, size: { width: number; height: number }) {
+  const svg = d3
+    .select(document)
+    .select("body")
+    .append("svg")
+    .attr("width", size.width)
+    .attr("xmlns", "http://www.w3.org/2000/svg")
+    .attr("height", size.height);
+
+  // Добавим defs и градиент
+  const defs = svg.append("defs");
+  defs
+    .append("linearGradient")
+    .attr("id", "fade-white")
+    .attr("x1", "0%")
+    .attr("y1", "0%")
+    .attr("x2", "0%")
+    .attr("y2", "100%")
+    .selectAll("stop")
+    .data([
+      { offset: "0%", color: "white", opacity: 1 },
+      { offset: "100%", color: "white", opacity: 0 }
+    ])
+    .enter()
+    .append("stop")
+    .attr("offset", d => d.offset)
+    .attr("stop-color", d => d.color)
+    .attr("stop-opacity", d => d.opacity);
+
+  // Прямоугольник с градиентом
+  svg.append("rect").attr("id", "history").attr("width", size.width).attr("height", size.height).style("fill", "url(#fade-white)");
+
+  const svgresult = d3.select(document).select("body").html();
+  d3.select(document).select("body").html("");
+  return new Resvg(svgresult).render().asPng();
 }
