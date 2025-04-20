@@ -4,11 +4,15 @@ import { Description, fetchParams, GithubReposResponseRepository, ImagesVars, im
 import path from "path";
 import { formatTitle } from "./title";
 import { getCommitsNumber } from "./git";
+import { getTextBlocks, getYearsData, trimToFit } from "./parser";
 
 import { JSDOM } from "jsdom";
 import fs from "fs";
 
 import drawMultiLine from "canvas-multiline-text";
+
+const yearsVerticalOffset = 8;
+const columnVerticalOffset = 27;
 
 export async function drawScreen(reposImages: Buffer[], params: ProgramParams) {
   const canvas = createCanvas(params.screen.screenSize.width, params.screen.screenSize.height);
@@ -67,44 +71,48 @@ export async function drawScreen(reposImages: Buffer[], params: ProgramParams) {
     let verticalOffset = 0;
     const offsets: number[] = [];
     const eventsLength: number[] = [];
-    Object.entries(yearBlocks)
-      .slice(0, 5)
-      .map(async ([year, events]) => {
-        eventsLength.push(events.length);
-        events = events.reverse().slice(0, 3);
-        offsets.push(verticalOffset);
-        events.forEach(event => {
-          ctx.font = '20px "Gilroy Bold"';
-          ctx.fillStyle = "#000000";
-          ctx.fillText(year, startPos.x, startPos.y + verticalOffset);
+    const limitedEventsLength: number[] = [];
+    const maxEventsRows = 16;
 
-          // ctx.font = '12px "Gilroy Regular"';
+    Object.keys(yearBlocks).forEach(k => yearBlocks[k as unknown as keyof typeof yearBlocks].reverse());
+    const limitedEvents = trimToFit(yearBlocks, maxEventsRows);
+    Object.keys(limitedEvents).forEach(k => limitedEvents[k as unknown as keyof typeof limitedEvents].reverse());
 
-          ctx.fillStyle = "#000000";
-          drawMultiLine(ctx as unknown as CanvasRenderingContext2D, event, {
-            font: "Gilroy Regular",
-            lineHeight: 0.91,
-            maxFontSize: 12,
-            minFontSize: 10,
-            rect: { width: 133, height: 29, x: startPos.x + 57, y: startPos.y + verticalOffset - 19 }
-          });
-          // ctx.fillText(event, startPos.x + 57, startPos.y + verticalOffset - 3);
-
-          verticalOffset += 30;
+    Object.entries(yearBlocks).map(async ([_, events]) => {
+      // получить кол-во всего событий в каждом году
+      eventsLength.push(events.length);
+    });
+    Object.entries(limitedEvents).map(async ([year, events]) => {
+      // получить лимитированное кол-во событий в году (всего 10, а после алгоритма - 5)
+      limitedEventsLength.push(events.length);
+      offsets.push(verticalOffset);
+      events.forEach(event => {
+        ctx.font = '20px "Gilroy Bold"';
+        ctx.fillStyle = "#000000";
+        ctx.fillText(year, startPos.x, startPos.y + verticalOffset);
+        ctx.fillStyle = "#000000";
+        drawMultiLine(ctx as unknown as CanvasRenderingContext2D, event, {
+          font: "Gilroy Regular",
+          lineHeight: 0.91,
+          maxFontSize: 12,
+          minFontSize: 10,
+          rect: { width: 133, height: 29, x: startPos.x + 57, y: startPos.y + verticalOffset - 19 }
         });
-        // здесь svg с fade эффектом
-
-        verticalOffset += 5;
+        verticalOffset += columnVerticalOffset;
       });
-    const gradientBoxInstanceBuffer = await loadImage(await drawGradientDownBox(document, { width: 180, height: 80 }));
-    offsets.forEach((offset, idx) => {
-      ctx.drawImage(gradientBoxInstanceBuffer, startPos.x, startPos.y + offset - 19);
 
+      verticalOffset += yearsVerticalOffset;
+    });
+    const gradientBoxInstanceBuffer = await loadImage(await drawGradientDownBox(document, { width: 190, height: 60 }));
+    offsets.forEach((offset, idx) => {
       const yearEventsLength = eventsLength[idx];
-      if (yearEventsLength > 3) {
+      const limitedYearEventsLength = limitedEventsLength[idx];
+      if (yearEventsLength > limitedYearEventsLength) {
+        ctx.drawImage(gradientBoxInstanceBuffer, startPos.x, startPos.y + offset - 19);
+
         ctx.font = '10px "Gilroy Regular"';
         ctx.fillStyle = "#676767";
-        const eventsLeft = yearEventsLength - 3;
+        const eventsLeft = yearEventsLength - limitedYearEventsLength;
         ctx.fillText(
           `+${String(eventsLeft)} ${eventsLeft % 10 === 1 && eventsLeft !== 11 ? "событие" : "событий"} `,
           startPos.x + 70,
@@ -201,7 +209,6 @@ export async function drawCard(info: GithubReposResponseRepository, params: Prog
 // import { Rsvg } from "librsvg";
 import d3 from "d3";
 import { Resvg } from "@resvg/resvg-js";
-import { getTextBlocks, getYearsData } from "./parser";
 // import fs from "fs";
 
 export async function drawBox(document: Document, size: { width: number; height: number }) {
