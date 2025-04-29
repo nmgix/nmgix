@@ -21,7 +21,7 @@ jobs:
           node-version: "18"
 
       - name: Установка пакетов
-        run: npm i
+        run: npm i --legacy-peer-deps
 
       - name: Создание изображения
         run: npx ts-node runner.ts
