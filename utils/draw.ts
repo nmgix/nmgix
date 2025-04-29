@@ -1,5 +1,5 @@
 import fetch from "node-fetch";
-import { createCanvas, loadImage } from "canvas";
+import { createCanvas, loadImage, CanvasRenderingContext2D as CanvasContext2D } from "canvas";
 import { Description, fetchParams, GithubReposResponseRepository, ImagesVars, imageType, paths, ProgramParams } from "./types.js";
 import path from "path";
 import { formatTitle } from "./title.js";
@@ -12,10 +12,6 @@ import * as d3 from "d3";
 import { Resvg } from "@resvg/resvg-js";
 // import { Rsvg } from "librsvg";
 // import fs from "fs";
-
-const contactsRowVerticalOffset = 22;
-const yearsVerticalOffset = 8;
-const yearRowVerticalOffset = 27;
 
 export async function drawScreen(reposImages: Buffer[], params: ProgramParams) {
   const canvas = createCanvas(params.screen.screenSize.width, params.screen.screenSize.height);
@@ -40,6 +36,28 @@ export async function drawScreen(reposImages: Buffer[], params: ProgramParams) {
   });
 
   //   установка текущей даты обновления изображения
+  await setImageGenTime({ x: 33, y: 938 }, ctx);
+
+  // получение и рендер информации из data.md
+  try {
+    const text = fs.readFileSync(path.join(process.cwd(), ...paths.textData), { encoding: "utf8" });
+    if (!text || text.length == 0) throw new Error("didn't find data.md to parse info from");
+    const textBlocks = getTextBlocks(text);
+    if (textBlocks.length === 0) throw new Error("no text blocks found");
+
+    const {
+      window: { document }
+    } = new JSDOM("<html><body></body></html>");
+    await drawContactsBlock({ x: 664, y: 82 }, getContacts(textBlocks[0]), ctx);
+    await drawYearsBlock({ x: 667, y: 173 }, getYearsData(textBlocks[1]), ctx, document);
+  } catch (error) {
+    console.log(error);
+  }
+
+  return canvas.toBuffer(imageType);
+}
+
+const setImageGenTime = async (initialPos: { x: number; y: number }, ctx: CanvasContext2D) => {
   const currentDate = new Date();
   const timeZone = "Europe/Moscow";
   const formattedDateTime = new Intl.DateTimeFormat("ru-RU", {
@@ -53,92 +71,87 @@ export async function drawScreen(reposImages: Buffer[], params: ProgramParams) {
   }).format(currentDate);
   ctx.font = '14px "Gilroy Regular"';
   ctx.fillStyle = "#FFFFFF";
-  ctx.fillText(`Обновлено: ${formattedDateTime} (UTC +3)`, 33, 938);
+  ctx.fillText(`Обновлено: ${formattedDateTime} (UTC +3)`, initialPos.x, initialPos.y);
+};
+
+const drawContactsBlock = async (initialPos: { x: number; y: number }, contactBlocks: { [constactType: string]: string }, ctx: CanvasContext2D) => {
+  const rowVerticalOffset = 22;
+
+  let verticalOffset = 0;
+  // console.log(contacts);
+  Object.entries(contactBlocks).map(async ([_contactType, contactData]) => {
+    ctx.font = '18px "Gilroy Bold"';
+    ctx.fillStyle = "#FFFFFF";
+    ctx.fillText(contactData, initialPos.x, initialPos.y + verticalOffset);
+
+    verticalOffset += rowVerticalOffset;
+  });
+};
+
+const drawYearsBlock = async (
+  initialPos: { x: number; y: number },
+  yearBlocks: Record<number, string[]>,
+  ctx: CanvasContext2D,
+  document: Document
+) => {
+  if (Object.keys(yearBlocks).length == 0) throw new Error("no year blocks found");
 
   // рендер бокового белого окна
-  const {
-    window: { document }
-  } = new JSDOM("<html><body></body></html>");
   await loadImage(await drawBox(document, { width: 210, height: 500 })).then(image => ctx.drawImage(image, 650, 140));
 
-  // получение и рендер информации из data.md
-  try {
-    const text = fs.readFileSync(path.join(process.cwd(), ...paths.textData), { encoding: "utf8" });
-    if (!text || text.length == 0) throw new Error("didn't find data.md to parse info from");
-    const textBlocks = getTextBlocks(text);
-    if (textBlocks.length === 0) throw new Error("no text blocks found");
+  const yearsVerticalOffset = 8;
+  const rowVerticalOffset = 27;
 
-    const contacts = getContacts(textBlocks[0]);
-    const contactsStartPos = { x: 664, y: 82 };
-    let cVerticalOffset = 0;
-    // console.log(contacts);
-    Object.entries(contacts).map(async ([_contactType, contactData]) => {
-      ctx.font = '18px "Gilroy Bold"';
-      ctx.fillStyle = "#FFFFFF";
-      ctx.fillText(contactData, contactsStartPos.x, contactsStartPos.y + cVerticalOffset);
+  let verticalOffset = 0;
+  const offsets: number[] = [];
+  const eventsLength: number[] = [];
+  const limitedEventsLength: number[] = [];
+  const maxEventsRows = 16;
 
-      cVerticalOffset += contactsRowVerticalOffset;
-    });
+  Object.keys(yearBlocks).forEach(k => yearBlocks[k as unknown as keyof typeof yearBlocks].reverse());
+  const limitedEvents = trimToFit(yearBlocks, maxEventsRows);
+  Object.keys(limitedEvents).forEach(k => limitedEvents[k as unknown as keyof typeof limitedEvents].reverse());
 
-    const yearBlocks = getYearsData(textBlocks[1]);
-    if (Object.keys(yearBlocks).length == 0) throw new Error("no year blocks found");
-
-    const yearsStartPos = { x: 667, y: 173 };
-    let yVerticalOffset = 0;
-    const offsets: number[] = [];
-    const eventsLength: number[] = [];
-    const limitedEventsLength: number[] = [];
-    const maxEventsRows = 16;
-
-    Object.keys(yearBlocks).forEach(k => yearBlocks[k as unknown as keyof typeof yearBlocks].reverse());
-    const limitedEvents = trimToFit(yearBlocks, maxEventsRows);
-    Object.keys(limitedEvents).forEach(k => limitedEvents[k as unknown as keyof typeof limitedEvents].reverse());
-
-    Object.entries(yearBlocks).map(async ([_, events]) => {
-      // получить кол-во всего событий в каждом году
-      eventsLength.push(events.length);
-    });
-    Object.entries(limitedEvents).map(async ([year, events]) => {
-      // получить лимитированное кол-во событий в году (всего 10, а после алгоритма - 5)
-      limitedEventsLength.push(events.length);
-      offsets.push(yVerticalOffset);
-      events.forEach(event => {
-        ctx.font = '20px "Gilroy Bold"';
-        ctx.fillStyle = "#000000";
-        ctx.fillText(year, yearsStartPos.x, yearsStartPos.y + yVerticalOffset);
-        ctx.fillStyle = "#000000";
-        drawMultiLine(ctx as unknown as CanvasRenderingContext2D, event, {
-          font: "Gilroy Regular",
-          lineHeight: 0.91,
-          maxFontSize: 12,
-          minFontSize: 10,
-          rect: { width: 133, height: 29, x: yearsStartPos.x + 57, y: yearsStartPos.y + yVerticalOffset - 19 }
-        });
-        yVerticalOffset += yearRowVerticalOffset;
+  Object.entries(yearBlocks).map(async ([_, events]) => {
+    // получить кол-во всего событий в каждом году
+    eventsLength.push(events.length);
+  });
+  Object.entries(limitedEvents).map(async ([year, events]) => {
+    // получить лимитированное кол-во событий в году (всего 10, а после алгоритма - 5)
+    limitedEventsLength.push(events.length);
+    offsets.push(verticalOffset);
+    events.forEach(event => {
+      ctx.font = '20px "Gilroy Bold"';
+      ctx.fillStyle = "#000000";
+      ctx.fillText(year, initialPos.x, initialPos.y + verticalOffset);
+      ctx.fillStyle = "#000000";
+      drawMultiLine(ctx as unknown as CanvasRenderingContext2D, event, {
+        font: "Gilroy Regular",
+        lineHeight: 0.91,
+        maxFontSize: 12,
+        minFontSize: 10,
+        rect: { width: 133, height: 29, x: initialPos.x + 57, y: initialPos.y + verticalOffset - 19 }
       });
-
-      yVerticalOffset += yearsVerticalOffset;
+      verticalOffset += rowVerticalOffset;
     });
-    const gradientBoxInstanceBuffer = await loadImage(await drawGradientDownBox(document, { width: 190, height: 60 }));
-    offsets.forEach((offset, idx) => {
-      const yearEventsLength = eventsLength[idx];
-      const limitedYearEventsLength = limitedEventsLength[idx];
-      if (yearEventsLength > limitedYearEventsLength) {
-        ctx.drawImage(gradientBoxInstanceBuffer, yearsStartPos.x, yearsStartPos.y + offset - 19);
 
-        ctx.font = '10px "Gilroy Regular"';
-        ctx.fillStyle = "#676767";
-        const eventsLeft = yearEventsLength - limitedYearEventsLength;
+    verticalOffset += yearsVerticalOffset;
+  });
+  const gradientBoxInstanceBuffer = await loadImage(await drawGradientDownBox(document, { width: 190, height: 60 }));
+  offsets.forEach((offset, idx) => {
+    const yearEventsLength = eventsLength[idx];
+    const limitedYearEventsLength = limitedEventsLength[idx];
+    if (yearEventsLength > limitedYearEventsLength) {
+      ctx.drawImage(gradientBoxInstanceBuffer, initialPos.x, initialPos.y + offset - 19);
 
-        ctx.fillText(`+${String(eventsLeft)} ${getEventWordForm(eventsLeft)} `, yearsStartPos.x + 70, yearsStartPos.y + offset - 5);
-      }
-    });
-  } catch (error) {
-    console.log(error);
-  }
+      ctx.font = '10px "Gilroy Regular"';
+      ctx.fillStyle = "#676767";
+      const eventsLeft = yearEventsLength - limitedYearEventsLength;
 
-  return canvas.toBuffer(imageType);
-}
+      ctx.fillText(`+${String(eventsLeft)} ${getEventWordForm(eventsLeft)} `, initialPos.x + 70, initialPos.y + offset - 5);
+    }
+  });
+};
 
 export async function drawCard(info: GithubReposResponseRepository, params: ProgramParams) {
   const canvas = createCanvas(params.card.cardSize.width, params.card.cardSize.height);

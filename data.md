@@ -1,6 +1,6 @@
 [contacts]
 gmail:nmgix.job@gmail.com
-tg:tg@dnl_chstv
+tg:tg@xcrr01
 
 [history]
 
