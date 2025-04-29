@@ -5,11 +5,13 @@ import path from "path";
 import { formatTitle } from "./title";
 import { getCommitsNumber } from "./git";
 import { getEventWordForm, getTextBlocks, getYearsData, trimToFit } from "./parser";
-
 import { JSDOM } from "jsdom";
 import fs from "fs";
-
 import drawMultiLine from "canvas-multiline-text";
+import * as d3 from "d3";
+import { Resvg } from "@resvg/resvg-js";
+// import { Rsvg } from "librsvg";
+// import fs from "fs";
 
 const yearsVerticalOffset = 8;
 const columnVerticalOffset = 27;
@@ -202,11 +204,6 @@ export async function drawCard(info: GithubReposResponseRepository, params: Prog
 
   return canvas.toBuffer(imageType);
 }
-
-// import { Rsvg } from "librsvg";
-import d3 from "d3";
-import { Resvg } from "@resvg/resvg-js";
-// import fs from "fs";
 
 export async function drawBox(document: Document, size: { width: number; height: number }) {
   // const boxTop = new Rsvg(path.join(process.cwd(), ...paths.formsFolder))
