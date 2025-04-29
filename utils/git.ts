@@ -1,5 +1,5 @@
 import fetch from "node-fetch";
-import { fetchParams } from "./types";
+import { fetchParams } from "./types.js";
 
 export async function getCommitsNumber(url: string) {
   let str = url.replace("{/sha}", "?per_page=1&page=1");

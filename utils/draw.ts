@@ -1,10 +1,10 @@
 import fetch from "node-fetch";
 import { createCanvas, loadImage } from "canvas";
-import { Description, fetchParams, GithubReposResponseRepository, ImagesVars, imageType, paths, ProgramParams } from "./types";
+import { Description, fetchParams, GithubReposResponseRepository, ImagesVars, imageType, paths, ProgramParams } from "./types.js";
 import path from "path";
-import { formatTitle } from "./title";
-import { getCommitsNumber } from "./git";
-import { getEventWordForm, getTextBlocks, getYearsData, trimToFit } from "./parser";
+import { formatTitle } from "./title.js";
+import { getCommitsNumber } from "./git.js";
+import { getEventWordForm, getTextBlocks, getYearsData, trimToFit } from "./parser.js";
 import { JSDOM } from "jsdom";
 import fs from "fs";
 import drawMultiLine from "canvas-multiline-text";

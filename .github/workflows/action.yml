@@ -24,7 +24,7 @@ jobs:
         run: npm i --legacy-peer-deps
 
       - name: Создание изображения
-        run: npx ts-node runner.ts
+        run: npm run start
         env:
           PUBLIC_ACCESS_TOKEN: ${{ secrets.PUBLIC_ACCESS_TOKEN }}
 

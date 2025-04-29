@@ -2,10 +2,11 @@
   "name": "imageupdater",
   "version": "1.0.0",
   "scripts": {
-    "start": "ts-node runner.ts"
+    "start": "node --loader ts-node/esm runner.ts"
   },
   "author": "nmgix",
   "license": "ISC",
+  "type": "module",
   "dependencies": {
     "@resvg/resvg-js": "^2.6.2",
     "@types/canvas-multiline-text": "^1.0.2",

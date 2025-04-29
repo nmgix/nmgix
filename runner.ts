@@ -8,8 +8,9 @@ registerFont("fonts/Gilroy-Heavy.ttf", { family: "Gilroy Heavy" });
 registerFont("fonts/Gilroy-Regular.ttf", { family: "Gilroy Regular" });
 registerFont("fonts/Gilroy-Bold.ttf", { family: "Gilroy Bold" });
 
-import { fetchParams, GithubReposResponse, paths, ProgramParams } from "./utils/types";
-import { drawBox, drawCard, drawScreen } from "./utils/draw";
+import { fetchParams, GithubReposResponse, paths, ProgramParams } from "./utils/types.js";
+import { drawBox, drawCard, drawScreen } from "./utils/draw.js";
+import { fileURLToPath } from "url";
 
 // .env → PUBLIC_ACCESS_TOKEN=ghp_************************************
 let params: ProgramParams = {
@@ -43,6 +44,9 @@ let params: ProgramParams = {
       console.timeEnd("Screen generating took");
       return buffer;
     });
+
+    const __filename = fileURLToPath(import.meta.url); // Получаем текущий файл
+    const __dirname = path.dirname(__filename);
 
     fs.writeFileSync(path.join(__dirname, ...paths.screenStore), resultBuffer);
     return process.exit(0);
