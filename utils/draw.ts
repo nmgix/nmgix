@@ -4,7 +4,7 @@ import { Description, fetchParams, GithubReposResponseRepository, ImagesVars, im
 import path from "path";
 import { formatTitle } from "./title.js";
 import { getCommitsNumber } from "./git.js";
-import { getEventWordForm, getTextBlocks, getYearsData, trimToFit } from "./parser.js";
+import { getContacts, getEventWordForm, getTextBlocks, getYearsData, trimToFit } from "./parser.js";
 import { JSDOM } from "jsdom";
 import fs from "fs";
 import drawMultiLine from "canvas-multiline-text";
@@ -13,8 +13,9 @@ import { Resvg } from "@resvg/resvg-js";
 // import { Rsvg } from "librsvg";
 // import fs from "fs";
 
+const contactsRowVerticalOffset = 22;
 const yearsVerticalOffset = 8;
-const columnVerticalOffset = 27;
+const yearRowVerticalOffset = 27;
 
 export async function drawScreen(reposImages: Buffer[], params: ProgramParams) {
   const canvas = createCanvas(params.screen.screenSize.width, params.screen.screenSize.height);
@@ -66,11 +67,24 @@ export async function drawScreen(reposImages: Buffer[], params: ProgramParams) {
     if (!text || text.length == 0) throw new Error("didn't find data.md to parse info from");
     const textBlocks = getTextBlocks(text);
     if (textBlocks.length === 0) throw new Error("no text blocks found");
-    const yearBlocks = getYearsData(textBlocks[0]);
+
+    const contacts = getContacts(textBlocks[0]);
+    const contactsStartPos = { x: 664, y: 82 };
+    let cVerticalOffset = 0;
+    // console.log(contacts);
+    Object.entries(contacts).map(async ([_contactType, contactData]) => {
+      ctx.font = '18px "Gilroy Bold"';
+      ctx.fillStyle = "#FFFFFF";
+      ctx.fillText(contactData, contactsStartPos.x, contactsStartPos.y + cVerticalOffset);
+
+      cVerticalOffset += contactsRowVerticalOffset;
+    });
+
+    const yearBlocks = getYearsData(textBlocks[1]);
     if (Object.keys(yearBlocks).length == 0) throw new Error("no year blocks found");
 
-    const startPos = { x: 667, y: 173 };
-    let verticalOffset = 0;
+    const yearsStartPos = { x: 667, y: 173 };
+    let yVerticalOffset = 0;
     const offsets: number[] = [];
     const eventsLength: number[] = [];
     const limitedEventsLength: number[] = [];
@@ -87,36 +101,36 @@ export async function drawScreen(reposImages: Buffer[], params: ProgramParams) {
     Object.entries(limitedEvents).map(async ([year, events]) => {
       // получить лимитированное кол-во событий в году (всего 10, а после алгоритма - 5)
       limitedEventsLength.push(events.length);
-      offsets.push(verticalOffset);
+      offsets.push(yVerticalOffset);
       events.forEach(event => {
         ctx.font = '20px "Gilroy Bold"';
         ctx.fillStyle = "#000000";
-        ctx.fillText(year, startPos.x, startPos.y + verticalOffset);
+        ctx.fillText(year, yearsStartPos.x, yearsStartPos.y + yVerticalOffset);
         ctx.fillStyle = "#000000";
         drawMultiLine(ctx as unknown as CanvasRenderingContext2D, event, {
           font: "Gilroy Regular",
           lineHeight: 0.91,
           maxFontSize: 12,
           minFontSize: 10,
-          rect: { width: 133, height: 29, x: startPos.x + 57, y: startPos.y + verticalOffset - 19 }
+          rect: { width: 133, height: 29, x: yearsStartPos.x + 57, y: yearsStartPos.y + yVerticalOffset - 19 }
         });
-        verticalOffset += columnVerticalOffset;
+        yVerticalOffset += yearRowVerticalOffset;
       });
 
-      verticalOffset += yearsVerticalOffset;
+      yVerticalOffset += yearsVerticalOffset;
     });
     const gradientBoxInstanceBuffer = await loadImage(await drawGradientDownBox(document, { width: 190, height: 60 }));
     offsets.forEach((offset, idx) => {
       const yearEventsLength = eventsLength[idx];
       const limitedYearEventsLength = limitedEventsLength[idx];
       if (yearEventsLength > limitedYearEventsLength) {
-        ctx.drawImage(gradientBoxInstanceBuffer, startPos.x, startPos.y + offset - 19);
+        ctx.drawImage(gradientBoxInstanceBuffer, yearsStartPos.x, yearsStartPos.y + offset - 19);
 
         ctx.font = '10px "Gilroy Regular"';
         ctx.fillStyle = "#676767";
         const eventsLeft = yearEventsLength - limitedYearEventsLength;
 
-        ctx.fillText(`+${String(eventsLeft)} ${getEventWordForm(eventsLeft)} `, startPos.x + 70, startPos.y + offset - 5);
+        ctx.fillText(`+${String(eventsLeft)} ${getEventWordForm(eventsLeft)} `, yearsStartPos.x + 70, yearsStartPos.y + offset - 5);
       }
     });
   } catch (error) {

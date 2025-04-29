@@ -5,7 +5,6 @@ export const getTextBlocks = (text: string) => {
 export const getYearsData = (textBlock: string) => {
   const yearBlocks: Record<number, string[]> = {};
   let currentYear: number | null = null;
-
   textBlock.split("\n").forEach(line => {
     line = line.trim();
 
@@ -25,6 +24,16 @@ export const getYearsData = (textBlock: string) => {
   });
 
   return yearBlocks;
+};
+
+export const getContacts = (textBlock: string) => {
+  let contacts: { [constactType: string]: string } = {};
+  textBlock.split("\n").forEach(line => {
+    line = line.trim();
+    const [contactType, contactData] = line.split(":");
+    if (!!contactType && !!contactData) contacts[contactType] = contactData;
+  });
+  return contacts;
 };
 
 export function trimToFit<T>(data: Record<string, T[]>, maxRows = 16) {

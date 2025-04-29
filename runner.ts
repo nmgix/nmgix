@@ -9,7 +9,7 @@ registerFont("fonts/Gilroy-Regular.ttf", { family: "Gilroy Regular" });
 registerFont("fonts/Gilroy-Bold.ttf", { family: "Gilroy Bold" });
 
 import { fetchParams, GithubReposResponse, paths, ProgramParams } from "./utils/types.js";
-import { drawBox, drawCard, drawScreen } from "./utils/draw.js";
+import { drawCard, drawScreen } from "./utils/draw.js";
 import { fileURLToPath } from "url";
 
 // .env → PUBLIC_ACCESS_TOKEN=ghp_************************************

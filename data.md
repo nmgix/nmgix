@@ -1,3 +1,7 @@
+[contacts]
+gmail:nmgix.job@gmail.com
+tg:tg@dnl_chstv
+
 [history]
 
     > 2019
